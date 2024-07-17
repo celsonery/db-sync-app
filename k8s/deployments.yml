@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-sync
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db-sync
+  template:
+    metadata:
+      labels:
+        app: db-sync
+    spec:
+      containers:
+      - name: db-sync
+        image: registry.bagarote.dev.br/bagarote/db-sync/front:latest
+        env:
+          - name: AMBIENTE
+            valueFrom:
+              secretKeyRef:
+                name: secrets-zecaentrega
+                key: ambiente
+        securityContext:
+          allowPrivilegeEscalation: false
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "250m"
+        ports:
+        - containerPort: 80
+      imagePullSecrets:
+        - name: regcred
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-sync-service
+spec:
+  selector:
+    app: db-sync
+  ports:
+  - port: 80
+    targetPort: 80
+  type: ClusterIP
